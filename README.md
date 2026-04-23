@@ -14,6 +14,8 @@ The script writes generated fixtures to `cases/` and outputs to `results/`.
 Important result files:
 
 - `results/summary.txt`
+- `results/<case>/aube-without-bun-lock.log`: output from `aube install` before any `bun.lock` exists
+- `results/<case>/aube-without-bun-lock.yaml`: Aube's generated lockfile from the no-`bun.lock` pass, when one was written
 - `results/<case>/sha256.txt`
 - `results/<case>/line-counts.txt`
 - `results/<case>/after-aube.diff`
@@ -24,6 +26,7 @@ Important result files:
 
 `results/summary.txt` columns:
 
+- `aube_without_bun_lock_status`: whether `aube install` worked before any `bun.lock` existed
 - `plain_aube_lock_status`: whether plain `aube install` changed Bun's original lockfile
 - `bun_after_plain_aube_lock_status`: whether a follow-up plain `bun install` restored Bun's original lockfile
 - `aube_force_lock_status`: whether `aube install --force` changed Bun's original lockfile
@@ -36,7 +39,9 @@ The expected behavior for compatibility is that `before-bun.lock` and `after-aub
 
 Tested locally with `bun 1.3.12` and `aube 1.0.0`.
 
-Each case starts by running `bun install` to create `before-bun.lock`. For the `--force` checks, the script resets back to that exact lockfile and runs either `aube install --force` or `bun install --force`.
+Each case first runs `aube install` before any `bun.lock` exists, records that result, removes the generated install artifacts, and then runs `bun install` to create `before-bun.lock`. For the `--force` checks, the script resets back to that exact lockfile and runs either `aube install --force` or `bun install --force`.
+
+`aube install` succeeds without an existing `bun.lock` in every fixture in this matrix. The plain install failures below happen after Bun has already written `bun.lock`, so those are Bun lockfile import/interpretation failures rather than fresh package.json resolution failures. The same distinction applies to the byte-for-byte churn cases: they are mutations of an existing Bun lockfile.
 
 `bun install --force` leaves `bun.lock` byte-for-byte unchanged in every case where Bun can install the fixture. That means the `aube install --force` changes below are not just Bun's own forced-install behavior.
 
@@ -72,6 +77,8 @@ Each example below represents a distinct failure mode observed in the matrix.
 ### Specifier resolution failures
 
 Aube can turn Bun-supported dependency specifiers into invalid registry tarball URLs.
+
+All of these specifier fixtures succeed when Aube starts from only `package.json` with no existing `bun.lock`. They fail when Aube reads the equivalent `bun.lock` produced by Bun.
 
 Local `file:` directories:
 

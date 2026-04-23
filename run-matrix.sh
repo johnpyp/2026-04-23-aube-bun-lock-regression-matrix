@@ -399,8 +399,18 @@ run_case() {
 
   rm -rf "$dir/node_modules" "$dir/bun.lock" "$dir/aube-lock.yaml"
 
+  local aube_without_bun_lock_status="aube-without-bun-lock-ok"
+  if ! (cd "$dir" && aube install > "$result/aube-without-bun-lock.log" 2>&1); then
+    aube_without_bun_lock_status="aube-without-bun-lock-failed"
+  fi
+  if [[ -f "$dir/aube-lock.yaml" ]]; then
+    cp "$dir/aube-lock.yaml" "$result/aube-without-bun-lock.yaml"
+  fi
+
+  rm -rf "$dir/node_modules" "$dir/bun.lock" "$dir/aube-lock.yaml"
+
   if ! (cd "$dir" && bun install > "$result/bun-install.log" 2>&1); then
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "bun-install-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$aube_without_bun_lock_status" "bun-install-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
     return
   fi
 
@@ -409,14 +419,14 @@ run_case() {
   if ! (cd "$dir" && aube install > "$result/aube-install.log" 2>&1); then
     cp "$dir/bun.lock" "$result/after-aube-bun.lock"
     git diff --no-index -- "$result/before-bun.lock" "$result/after-aube-bun.lock" > "$result/after-aube.diff" || true
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "aube-install-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$aube_without_bun_lock_status" "aube-install-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
     return
   fi
 
   cp "$dir/bun.lock" "$result/after-aube-bun.lock"
 
   if ! (cd "$dir" && bun install > "$result/bun-after-aube.log" 2>&1); then
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "bun-after-aube-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$aube_without_bun_lock_status" "bun-after-aube-failed" "" "" "" "" >> "$RESULTS_DIR/summary.tsv"
     return
   fi
 
@@ -471,7 +481,7 @@ run_case() {
     aube_force_vs_bun_force_lock_status="aube-force-differs-from-bun-force"
   fi
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$plain_aube_lock_status" "$bun_after_plain_aube_lock_status" "$aube_force_lock_status" "$bun_force_lock_status" "$aube_force_vs_bun_force_lock_status" >> "$RESULTS_DIR/summary.tsv"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$aube_without_bun_lock_status" "$plain_aube_lock_status" "$bun_after_plain_aube_lock_status" "$aube_force_lock_status" "$bun_force_lock_status" "$aube_force_vs_bun_force_lock_status" >> "$RESULTS_DIR/summary.tsv"
 }
 
 create_simple_exact
@@ -493,7 +503,7 @@ create_patched_dependency
 create_trusted_builds
 create_optional_platforms
 
-printf 'case\tplain_aube_lock_status\tbun_after_plain_aube_lock_status\taube_force_lock_status\tbun_force_lock_status\taube_force_vs_bun_force_lock_status\n' > "$RESULTS_DIR/summary.tsv"
+printf 'case\taube_without_bun_lock_status\tplain_aube_lock_status\tbun_after_plain_aube_lock_status\taube_force_lock_status\tbun_force_lock_status\taube_force_vs_bun_force_lock_status\n' > "$RESULTS_DIR/summary.tsv"
 
 for case_dir in "$CASES_DIR"/*; do
   run_case "$(basename "$case_dir")"
