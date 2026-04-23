@@ -396,28 +396,28 @@ run_case() {
 
   rm -rf "$dir/node_modules"
   cp "$result/before-bun.lock" "$dir/bun.lock"
-  local force_status="force-unchanged"
+  local aube_force_lock_status="aube-force-unchanged"
   if ! (cd "$dir" && aube install --force > "$result/aube-force-install.log" 2>&1); then
-    force_status="force-failed"
+    aube_force_lock_status="aube-force-failed"
     cp "$dir/bun.lock" "$result/after-aube-force-bun.lock"
   else
     cp "$dir/bun.lock" "$result/after-aube-force-bun.lock"
     if ! cmp -s "$result/before-bun.lock" "$result/after-aube-force-bun.lock"; then
-      force_status="force-changed"
+      aube_force_lock_status="aube-force-changed"
     fi
   fi
   git diff --no-index -- "$result/before-bun.lock" "$result/after-aube-force-bun.lock" > "$result/after-aube-force.diff" || true
 
   rm -rf "$dir/node_modules"
   cp "$result/before-bun.lock" "$dir/bun.lock"
-  local bun_force_status="bun-force-unchanged"
+  local bun_force_lock_status="bun-force-unchanged"
   if ! (cd "$dir" && bun install --force > "$result/bun-force-install.log" 2>&1); then
-    bun_force_status="bun-force-failed"
+    bun_force_lock_status="bun-force-failed"
     cp "$dir/bun.lock" "$result/after-bun-force.lock"
   else
     cp "$dir/bun.lock" "$result/after-bun-force.lock"
     if ! cmp -s "$result/before-bun.lock" "$result/after-bun-force.lock"; then
-      bun_force_status="bun-force-changed"
+      bun_force_lock_status="bun-force-changed"
     fi
   fi
   git diff --no-index -- "$result/before-bun.lock" "$result/after-bun-force.lock" > "$result/after-bun-force.diff" || true
@@ -425,22 +425,22 @@ run_case() {
   sha256sum "$result/before-bun.lock" "$result/after-aube-bun.lock" "$result/after-bun-again.lock" "$result/after-aube-force-bun.lock" "$result/after-bun-force.lock" > "$result/sha256.txt"
   wc -l "$result/before-bun.lock" "$result/after-aube-bun.lock" "$result/after-bun-again.lock" "$result/after-aube-force-bun.lock" "$result/after-bun-force.lock" > "$result/line-counts.txt"
 
-  local status="unchanged"
+  local plain_aube_lock_status="plain-aube-unchanged"
   if ! cmp -s "$result/before-bun.lock" "$result/after-aube-bun.lock"; then
-    status="aube-changed"
+    plain_aube_lock_status="plain-aube-changed"
   fi
 
-  local bun_again_status="bun-again-same"
+  local bun_after_plain_aube_lock_status="bun-after-plain-aube-same"
   if ! cmp -s "$result/before-bun.lock" "$result/after-bun-again.lock"; then
-    bun_again_status="bun-again-changed"
+    bun_after_plain_aube_lock_status="bun-after-plain-aube-changed"
   fi
 
-  local force_comparison_status="force-matches-bun"
+  local aube_force_vs_bun_force_lock_status="aube-force-matches-bun-force"
   if ! cmp -s "$result/after-bun-force.lock" "$result/after-aube-force-bun.lock"; then
-    force_comparison_status="force-differs-from-bun"
+    aube_force_vs_bun_force_lock_status="aube-force-differs-from-bun-force"
   fi
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$status" "$bun_again_status" "$force_status" "$bun_force_status" "$force_comparison_status" >> "$RESULTS_DIR/summary.tsv"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$name" "$plain_aube_lock_status" "$bun_after_plain_aube_lock_status" "$aube_force_lock_status" "$bun_force_lock_status" "$aube_force_vs_bun_force_lock_status" >> "$RESULTS_DIR/summary.tsv"
 }
 
 create_simple_exact
@@ -461,7 +461,7 @@ create_patched_dependency
 create_trusted_builds
 create_optional_platforms
 
-printf 'case\tstatus\tbun_after_aube_status\taube_force_status\tbun_force_status\taube_force_vs_bun_force\n' > "$RESULTS_DIR/summary.tsv"
+printf 'case\tplain_aube_lock_status\tbun_after_plain_aube_lock_status\taube_force_lock_status\tbun_force_lock_status\taube_force_vs_bun_force_lock_status\n' > "$RESULTS_DIR/summary.tsv"
 
 for case_dir in "$CASES_DIR"/*; do
   run_case "$(basename "$case_dir")"

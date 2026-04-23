@@ -22,6 +22,14 @@ Important result files:
 - `results/<case>/aube-force-vs-bun-force.diff`: direct comparison of `aube install --force` output vs. `bun install --force` output from the same original lockfile
 - `results/<case>/after-bun-again.diff`
 
+`results/summary.txt` columns:
+
+- `plain_aube_lock_status`: whether plain `aube install` changed Bun's original lockfile
+- `bun_after_plain_aube_lock_status`: whether a follow-up plain `bun install` restored Bun's original lockfile
+- `aube_force_lock_status`: whether `aube install --force` changed Bun's original lockfile
+- `bun_force_lock_status`: whether `bun install --force` changed Bun's original lockfile
+- `aube_force_vs_bun_force_lock_status`: whether the two `--force` outputs match
+
 The expected behavior for compatibility is that `before-bun.lock` and `after-aube-bun.lock` are byte-for-byte identical for every supported case.
 
 ## Current findings
