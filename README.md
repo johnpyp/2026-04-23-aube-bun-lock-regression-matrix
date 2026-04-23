@@ -96,11 +96,13 @@ GitHub shorthand specs:
 github:jonschlinkert/is-number#7.0.0 -> https://registry.npmjs.org/is-number/-/is-number-github:jonschlinkert/is-number
 ```
 
-Workspace protocol specs:
+Workspace protocol specs in the minimal `workspace-protocol-only` fixture:
 
 ```txt
 workspace:* -> https://registry.npmjs.org/sample-lib/-/sample-lib-workspace:packages/lib.tgz
 ```
+
+This is not claiming every `workspace:*` dependency fails. The `workspace-catalog-overrides` fixture installs successfully with `sample-lib: "workspace:*"`, but Aube still drops the workspace package entries when it writes `bun.lock`.
 
 ### Top-level lock metadata loss
 
@@ -153,7 +155,7 @@ Workspace package entries are dropped in `workspace-catalog-only` after resettin
 -    "sample-app": ["sample-app@workspace:packages/app"],
 ```
 
-In `workspace-catalog-overrides`, plain `aube install` drops workspace package entries; a follow-up plain `bun install` restores those entries but does not restore the original peer metadata bytes:
+In `workspace-catalog-overrides`, `sample-lib: "workspace:*"` does not make install fail, but plain `aube install` drops workspace package entries; a follow-up plain `bun install` restores those entries but does not restore the original peer metadata bytes:
 
 ```diff
 -    "sample-app": ["sample-app@workspace:packages/app"],
