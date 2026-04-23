@@ -162,6 +162,37 @@ create_workspace_protocol_only() {
 }'
 }
 
+create_workspace_protocol_with_overrides() {
+  local dir="$CASES_DIR/workspace-protocol-with-overrides"
+  mkdir -p "$dir/packages/app" "$dir/packages/lib"
+  write_package_json "$dir" '{
+  "name": "workspace-protocol-with-overrides",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "overrides": {
+    "left-pad": "1.3.0"
+  }
+}'
+  write_package_json "$dir/packages/app" '{
+  "name": "sample-app",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "sample-lib": "workspace:*"
+  }
+}'
+  write_package_json "$dir/packages/lib" '{
+  "name": "sample-lib",
+  "version": "1.0.0",
+  "private": true
+}'
+}
+
 create_workspace_catalog_only() {
   local dir="$CASES_DIR/workspace-catalog-only"
   mkdir -p "$dir/packages/app"
@@ -448,6 +479,7 @@ create_peer_optional
 create_workspace_catalog_overrides
 create_named_catalogs
 create_workspace_protocol_only
+create_workspace_protocol_with_overrides
 create_workspace_catalog_only
 create_overrides_resolutions
 create_alias_npm

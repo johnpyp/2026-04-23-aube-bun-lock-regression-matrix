@@ -55,6 +55,7 @@ Summary:
 | `workspace-catalog-only` | plain `aube install` leaves `bun.lock` unchanged; `aube install --force` changes it, while `bun install --force` does not |
 | `workspace-catalog-overrides` | plain `aube install` changes `bun.lock`; follow-up `bun install` still does not restore original bytes; `aube install --force` changes it, while `bun install --force` does not |
 | `workspace-protocol-only` | `aube install` fails |
+| `workspace-protocol-with-overrides` | plain `aube install` changes `bun.lock`; `aube install --force` changes it, while `bun install --force` does not |
 | `file-directory` | `aube install` fails |
 | `local-tarball` | `aube install` fails |
 | `tarball-url` | `aube install` fails |
@@ -96,13 +97,25 @@ GitHub shorthand specs:
 github:jonschlinkert/is-number#7.0.0 -> https://registry.npmjs.org/is-number/-/is-number-github:jonschlinkert/is-number
 ```
 
-Workspace protocol specs in the minimal `workspace-protocol-only` fixture:
+Workspace protocol specs in the minimal `workspace-protocol-only` fixture fail when there is no non-empty root `overrides` object:
 
 ```txt
 workspace:* -> https://registry.npmjs.org/sample-lib/-/sample-lib-workspace:packages/lib.tgz
 ```
 
-This is not claiming every `workspace:*` dependency fails. The `workspace-catalog-overrides` fixture installs successfully with `sample-lib: "workspace:*"`, but Aube still drops the workspace package entries when it writes `bun.lock`.
+Adding any non-empty root `overrides` object changes the behavior: install succeeds, but Aube still drops the workspace package entries and drops the `overrides` metadata. The minimal `workspace-protocol-with-overrides` fixture uses an unrelated override:
+
+```diff
+-  "overrides": {
+-    "left-pad": "1.3.0",
+-  },
+   "packages": {
+-    "sample-app": ["sample-app@workspace:packages/app"],
+-    "sample-lib": ["sample-lib@workspace:packages/lib"],
+   }
+```
+
+So the exact workspace finding is: without non-empty root `overrides`, Aube tries to resolve Bun's `sample-lib@workspace:packages/lib` lock entry as a registry tarball; with non-empty root `overrides`, Aube avoids the fetch failure but rewrites `bun.lock` by deleting the workspace package entries.
 
 ### Top-level lock metadata loss
 
